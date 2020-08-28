@@ -11,6 +11,7 @@ namespace BassDemo
     public class FFTDialg:Control
     {
         private int[] _fftData = null;
+        private Color drawColor = Color.Red;
         private int bottom1 = 0;
         private int bottom2 = 0;
         private int bottom2Height = 10;
@@ -35,6 +36,18 @@ namespace BassDemo
             }
         }
         
+        public Color DrawColor
+        {
+            get
+            {
+                return drawColor;
+            }
+            set
+            {
+                drawColor = value;
+                Invalidate();
+            }
+        }
 
         protected override void OnPaint(PaintEventArgs e)
         {
@@ -51,7 +64,7 @@ namespace BassDemo
                 for(int i = 0; i < _fftData.Length/2 - 21; i++)
                 {
                     //g.DrawLine(, new Point(i*2, bottom1), new Point(i*2, bottom1 - _fftData[i]));
-                    g.FillRectangle(Brushes.Red, new Rectangle(i * (bottom1Width+ bottomCellWidth), bottom1 - _fftData[i], bottom1Width, _fftData[i]));
+                    g.FillRectangle(new SolidBrush(drawColor), new Rectangle(i * (bottom1Width+ bottomCellWidth), bottom1 - _fftData[i], bottom1Width, _fftData[i]));
                 }
             }
         }

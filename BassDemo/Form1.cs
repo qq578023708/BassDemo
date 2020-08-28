@@ -17,6 +17,7 @@ namespace BassDemo
         int BandsCount = 128;
         int Rate = 1000;
         Timer t = new Timer();
+        
         public Form1()
         {
             InitializeComponent();
@@ -82,6 +83,14 @@ namespace BassDemo
             {
 
                 Bass.BASS_ChannelStop(streamHandle);
+            }
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+           if(DialogResult.OK== colorDialog1.ShowDialog())
+            {
+                fftDialg1.DrawColor = colorDialog1.Color;
             }
         }
     }
