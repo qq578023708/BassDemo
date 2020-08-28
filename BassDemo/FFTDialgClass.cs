@@ -11,14 +11,23 @@ namespace BassDemo
     public class FFTDialg:Control
     {
         private int[] _fftData = null;
+        private int[] _topData = null;
         private Color drawColor = Color.Red;
         private int bottom1 = 0;
         private int bottom2 = 0;
         private int bottom2Height = 10;
         private int bottom1Width = 0;
         private int bottomCellWidth = 2; //柱状条间隔
+        const int cells = 42; //柱状数量
+        const int topRectSpeed = 4; //顶部下落速度
+        private int topRectHeight = 1;
+        private int currentPlayValue = 0;
+        private Random rd = null;
         public FFTDialg()
         {
+            rd = new Random();
+            _topData = new int[cells];
+            SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true);
             
         }
 
@@ -31,7 +40,6 @@ namespace BassDemo
             set
             {
                 _fftData = value;
-                ReSetSize();
                 Invalidate();
             }
         }
@@ -59,12 +67,19 @@ namespace BassDemo
             
             if (_fftData != null)
             {
-
+                bottom1Width = _fftData != null ? this.Width / cells - bottomCellWidth : 2;
                 g.FillRectangle(Brushes.Green, new Rectangle(0, bottom2, Width, bottom2Height));
-                for(int i = 0; i < _fftData.Length/2 - 21; i++)
+                for(int i = 0; i < cells; i++)
                 {
-                    //g.DrawLine(, new Point(i*2, bottom1), new Point(i*2, bottom1 - _fftData[i]));
-                    g.FillRectangle(new SolidBrush(drawColor), new Rectangle(i * (bottom1Width+ bottomCellWidth), bottom1 - _fftData[i], bottom1Width, _fftData[i]));
+                    if (_fftData[i] > bottom1) _fftData[i] = bottom1-topRectHeight;
+                    if(_topData[i]<= bottom1) _topData[i] += topRectSpeed;
+                    
+                    if (bottom1 - _fftData[i]- topRectHeight <= _topData[i]) _topData[i] = bottom1 - _fftData[i]- topRectHeight;
+
+                    Rectangle zhuRect = new Rectangle(i * (bottom1Width + bottomCellWidth), bottom1 - _fftData[i], bottom1Width, _fftData[i]);
+                    Rectangle topRect = new Rectangle(i * (bottom1Width + bottomCellWidth),  _topData[i], bottom1Width, topRectHeight);
+                    g.FillRectangle(new SolidBrush(drawColor), zhuRect);
+                    g.FillRectangle(Brushes.Yellow, topRect);
                 }
             }
         }
@@ -80,7 +95,11 @@ namespace BassDemo
             this.BackColor = Color.Black;
             bottom2 = this.Height - bottom2Height;
             bottom1 = bottom2-1;
-            bottom1Width = _fftData != null ? this.Width /(_fftData.Length/2-21)-bottomCellWidth : 2;
+            
+            for (int i = 0; i < cells; i++)
+            {
+                _topData[i] = bottom1;
+            }
         }
     }
 }

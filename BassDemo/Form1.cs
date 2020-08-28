@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Diagnostics;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
@@ -15,7 +16,10 @@ namespace BassDemo
     {
         int streamHandle = 0;
         int BandsCount = 128;
-        int Rate = 1000;
+        int Rate = 3500;
+        string[] files=null;
+        int currentPlayIndex = 0;
+        
         Timer t = new Timer();
         
         public Form1()
@@ -25,6 +29,11 @@ namespace BassDemo
 
         private void Form1_Load(object sender, EventArgs e)
         {
+            if (!Directory.Exists("music"))
+            {
+                Directory.CreateDirectory("music");
+            }
+            files= Directory.GetFiles("music");
             if( Bass.BASS_Init(-1, 44100, BASSInit.BASS_DEVICE_LATENCY, this.Handle))
             {
                 BASS_INFO info = new BASS_INFO();
@@ -39,18 +48,24 @@ namespace BassDemo
             t.Interval = 50;
             t.Tick += T_Tick;
             t.Start();
-            streamHandle= Bass.BASS_StreamCreateFile("1.mp3", 0, 0, BASSFlag.BASS_SAMPLE_FLOAT | BASSFlag.BASS_STREAM_PRESCAN);
-            
         }
 
         private void T_Tick(object sender, EventArgs e)
         {
             if (Bass.BASS_ChannelIsActive(streamHandle) != BASSActive.BASS_ACTIVE_PLAYING) return;
+
+            
+
             int[] nfftData = Array.ConvertAll<float, int>(GetFFTData(), delegate (float f)
                {
                    return Convert.ToInt32(Math.Round(f*Rate));
                });
             fftDialg1.FFTData = nfftData;
+
+
+            int time1=(int)Math.Round( Bass.BASS_ChannelBytes2Seconds(streamHandle, Bass.BASS_ChannelGetPosition(streamHandle)));
+            int time2= (int)Math.Round(Bass.BASS_ChannelBytes2Seconds(streamHandle, Bass.BASS_ChannelGetLength(streamHandle)));
+            if (time1 == time2) play();
 
         }
 
@@ -68,22 +83,40 @@ namespace BassDemo
             Bass.BASS_Free();
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void play()
         {
+            if (files == null) return;
+
+            streamHandle = Bass.BASS_StreamCreateFile(files[currentPlayIndex], 0, 0, BASSFlag.BASS_SAMPLE_FLOAT | BASSFlag.BASS_STREAM_PRESCAN);
             if (streamHandle != 0)
             {
 
                 Bass.BASS_ChannelPlay(streamHandle, true);
             }
+            currentPlayIndex++;
+            if (currentPlayIndex >= files.Length) currentPlayIndex = 0;
+        }
+
+        private void stop()
+        {
+            Debug.WriteLine(streamHandle);
+            if (streamHandle != 0)
+            {
+                Bass.BASS_ChannelStop(streamHandle);
+                Bass.BASS_StreamFree(streamHandle);
+                streamHandle = 0;
+            }
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            stop();
+            play();
         }
 
         private void button2_Click(object sender, EventArgs e)
         {
-            if (streamHandle != 0)
-            {
-
-                Bass.BASS_ChannelStop(streamHandle);
-            }
+            stop();
         }
 
         private void button3_Click(object sender, EventArgs e)
